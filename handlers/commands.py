@@ -1,5 +1,3 @@
-print(">>> HANDLERS/COMMANDS IMPORTED <<<")
-
 import discord
 from scraper.olx import get_olx_offers
 from scraper.vinted import get_vinted_offers
@@ -25,15 +23,12 @@ def reset_user(user_id):
         del user_states[user_id]
 
 def init_commands(bot):
-
     @bot.event
     async def on_message(message):
-print(">>> on_message fired", message.content)
-
         if message.author == bot.user:
             return
 
-        # KOMENDA /help - pokazuje instrukcję w DM lub na kanale
+        # KOMENDA /help
         if message.content.strip().lower() in ["/help", "!help", "help"]:
             help_text = (
                 "**Komendy FlipBot:**\n"
@@ -127,7 +122,6 @@ print(">>> on_message fired", message.content)
                     await message.channel.send(
                         f"Odległość od Ciebie do sprzedającego: **{dystans_km} km**"
                     )
-                    # Tu dodaj analizę cenową, np. wywołaj scrapery OLX/Vinted i pokaż wyniki!
                     await message.channel.send(
                         "Dziękuję za skorzystanie z FlipBot!\nJeśli chcesz przeprowadzić kolejną analizę, wpisz `/start` na serwerze.\nAby zobaczyć listę komend, wpisz `/help`."
                     )
