@@ -1,3 +1,5 @@
+print(">>> HANDLERS/COMMANDS IMPORTED <<<")
+
 import discord
 from scraper.olx import get_olx_offers
 from scraper.vinted import get_vinted_offers
@@ -26,6 +28,8 @@ def init_commands(bot):
 
     @bot.event
     async def on_message(message):
+print(">>> on_message fired", message.content)
+
         if message.author == bot.user:
             return
 
