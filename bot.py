@@ -8,7 +8,7 @@ from scraper.vinted import get_vinted_offers
 from scraper.allegro import get_allegro_offers
 from db.cache import OfferCache
 from utils.discord_utils import send_offer_embed, move_to_archive
-from utils.geo import get_wojewodztwo_for_city
+#from utils.geo import get_wojewodztwo_for_city
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
