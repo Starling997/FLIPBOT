@@ -1,0 +1,8 @@
+discord.py>=2.3.2
+aiohttp
+beautifulsoup4
+requests
+matplotlib
+geopy
+python-dotenv
+apscheduler
