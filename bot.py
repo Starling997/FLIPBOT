@@ -1,3 +1,4 @@
+
 import os
 import discord
 from discord.ext import commands, tasks
@@ -84,3 +85,6 @@ async def srednia(ctx, *, query):
     await ctx.send(f'Analizuję średnią cenę dla: {query}')
 
 bot.run(TOKEN)
+from handlers.commands import init_commands
+init_commands(bot)
+
