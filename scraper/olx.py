@@ -1,54 +1,65 @@
 import aiohttp
 from bs4 import BeautifulSoup
-from scraper.keywords import ALL_KEYWORDS
 import re
 
-OLX_URL = "https://www.olx.pl/elektronika/telefony/"
-OLX_BASE = "https://www.olx.pl"
+def pasuje(model_user, title):
+    slowa = re.findall(r'\w+', model_user.lower())
+    tytul = title.lower()
+    return all(s in tytul for s in slowa)
 
-async def get_olx_offers():
+async def get_olx_offers(model_user, powiat_city, radius_km=55):
     offers = []
+    BASE_URL = "https://www.olx.pl"
+    categories = [
+        "elektronika/telefony",
+        "elektronika/laptopy-komputery",
+        "elektronika/gry-konsole"
+    ]
     async with aiohttp.ClientSession() as session:
-        for page in range(1, 4):  # pierwsze 3 strony
-            url = OLX_URL + f"?page={page}"
-            async with session.get(url, headers={"User-Agent": "Mozilla/5.0"}) as resp:
-                html = await resp.text()
-            soup = BeautifulSoup(html, "html.parser")
-            for item in soup.select("div[data-cy='l-card']"):
-                title = item.select_one("h6").get_text(strip=True)
-                description = title.lower()
-                link = OLX_BASE + item.select_one("a")["href"]
-                price_txt = item.select_one("p[data-testid='ad-price']").get_text(strip=True)
-                price = int(re.sub(r"[^\d]", "", price_txt))
-                location = item.select_one("p[data-testid='location-date']").get_text(strip=True).split("-")[0].strip()
-                img = item.select_one("img")["src"] if item.select_one("img") else None
-
-                # Rozpoznanie kategorii/modelu
-                model = None
-                kategoria = None
-                for kw in ALL_KEYWORDS:
-                    if kw in description:
-                        model = kw
+        for category in categories:
+            url = f"{BASE_URL}/{category}/{powiat_city.lower()}/"
+            for page in range(1, 10):
+                full_url = f"{url}?page={page}"
+                async with session.get(full_url) as resp:
+                    if resp.status != 200:
                         break
-                if not model:
-                    continue  # nie bierzemy ofert spoza targetu
+                    html = await resp.text()
+                soup = BeautifulSoup(html, "html.parser")
+                cards = soup.select("div[data-cy='l-card']")
+                if not cards:
+                    break
+                for offer in cards:
+                    title_tag = offer.select_one("h6")
+                    if not title_tag:
+                        continue
+                    title = title_tag.get_text(strip=True)
+                    if not pasuje(model_user, title):
+                        continue
+                    price_tag = offer.select_one("p[data-testid='ad-price']")
+                    if not price_tag:
+                        continue
+                    price_txt = price_tag.get_text(strip=True)
+                    try:
+                        price_num = int(re.sub(r"[^\d]", "", price_txt))
+                    except:
+                        continue
+                    link_tag = offer.select_one("a")
+                    link = BASE_URL + link_tag['href'] if link_tag and link_tag.get('href') else ""
+                    city_tag = offer.select_one("p[data-testid='location-date']")
+                    city = city_tag.get_text(strip=True).split("-")[0].strip() if city_tag else powiat_city
+                    offer_obj = {
+                        "title": title,
+                        "price": price_num,
+                        "link": link,
+                        "city": city,
+                        "date": None
+                    }
+                    offers.append(offer_obj)
+    seen = set()
+    unique_offers = []
+    for o in offers:
+        if o["link"] not in seen:
+            seen.add(o["link"])
+            unique_offers.append(o)
+    return unique_offers
 
-                if "iphone" in model: kategoria = "iphone"
-                elif "macbook" in model: kategoria = "macbook"
-                elif "xbox" in model: kategoria = "xbox"
-                elif "ps" in model or "playstation" in model: kategoria = "ps"
-                else: kategoria = "inne"
-
-                offers.append({
-                    "portal": "OLX",
-                    "model": model,
-                    "kategoria": kategoria,
-                    "title": title,
-                    "description": description,
-                    "link": link,
-                    "price": price,
-                    "location": location,
-                    "img": img,
-                    "wojewodztwo": None  # Uzupełni geo.py
-                })
-    return offers

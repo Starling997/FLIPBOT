@@ -11,8 +11,9 @@ def pasuje(model_user, title):
 async def get_vinted_offers(model_user, powiat_city, radius_km=55):
     offers = []
     BASE_URL = "https://www.vinted.pl"
+    # Kategorie z Vinted na elektronikę: telefony, laptopy, konsole
     categories = [
-        "catalog?search_text=",
+        "catalog?search_text=",  # Uniwersalnie — pełnotekstowe
     ]
     async with aiohttp.ClientSession() as session:
         for category in categories:
@@ -42,7 +43,7 @@ async def get_vinted_offers(model_user, powiat_city, radius_km=55):
                     price_num = int(re.sub(r"[^\d]", "", price_txt))
                     link_tag = offer.select_one("a")
                     link = BASE_URL + link_tag['href'] if link_tag else ""
-                    city = powiat_city
+                    city = powiat_city  # Vinted nie zawsze podaje miasto
                     offer_obj = {
                         "title": title,
                         "price": price_num,
@@ -51,6 +52,7 @@ async def get_vinted_offers(model_user, powiat_city, radius_km=55):
                         "date": None
                     }
                     offers.append(offer_obj)
+    # Usuwanie duplikatów po linku
     seen = set()
     unique_offers = []
     for o in offers:
